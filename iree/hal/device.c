@@ -33,10 +33,19 @@ IREE_API_EXPORT iree_hal_allocator_t* iree_hal_device_allocator(
   return _VTABLE_DISPATCH(device, device_allocator)(device);
 }
 
-IREE_API_EXPORT iree_status_t iree_hal_device_query_i32(
-    iree_hal_device_t* device, iree_string_view_t key, int32_t* out_value) {
+IREE_API_EXPORT iree_status_t
+iree_hal_device_query_i32(iree_hal_device_t* device, iree_string_view_t ns,
+                          iree_string_view_t key, int32_t* out_value) {
   IREE_ASSERT_ARGUMENT(device);
-  return _VTABLE_DISPATCH(device, query_i32)(device, key, out_value);
+  IREE_ASSERT_ARGUMENT(out_value);
+
+  if (iree_string_view_equal(ns, iree_make_cstring_view("hal.device.id"))) {
+    *out_value =
+        iree_string_view_match_pattern(iree_hal_device_id(device), key) ? 1 : 0;
+    return iree_ok_status();
+  }
+
+  return _VTABLE_DISPATCH(device, query_i32)(device, ns, key, out_value);
 }
 
 // Validates that the submission is well-formed.
